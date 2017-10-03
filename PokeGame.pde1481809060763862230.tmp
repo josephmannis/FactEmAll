@@ -1,0 +1,136 @@
+import interfascia.*;
+import java.util.Collections;
+import java.util.Random;
+
+/*
+Represents the actual game of FactAMole. Moles will appear randomly, and the user may click
+ on the mole to knock it. Once a mole has been successfully knocked, it will display its fact
+ and become deprecated. Moles that are deprecated will be displayed on the top of the intercace,
+ and may be clicked again at any time to display their fact. As the number of moles decreases, 
+ the speed at which the appear and dissppear will increase. Once all the moles are deprecated, 
+ the player will be presented with the option to play again, or view all of the moles. 
+ */
+
+class PokeGame implements IMode {
+  ArrayList<ActionButton> fieldButtons;
+  public PokeGame() {
+    fieldButtons = new ArrayList<ActionButton>();
+    initGameGUI(fieldButtons);
+    initActionListeners();
+  }
+
+  // The drawing procedure for this IMode
+  public void drawMode() {
+    renderPokeSlots();
+
+     playGame();
+  }
+
+  // Renders the PokeSlots
+  private void renderPokeSlots() {
+    clear();
+    for (int y = 0; y < 2; y++) {
+      for (int x = 0; x < 5; x++) {
+        PVector shapeLoc = slotLocations.get(new PVector(x, y));
+        field[y][x].drawSlot(shapeLoc);
+      }
+    }
+  }
+
+  // Plays the game
+  private void playGame() {
+    Random rand = new Random();
+
+    while (!allPokes.isEmpty()) {
+      println("step 1");
+      ArrayList<Integer> range = new ArrayList<Integer>();
+      // Generate available pokemon slots
+      for (int i = 0; i < allPokes.size(); i++) {
+        range.add(i);
+      }
+      // Shuffle for randomness
+      Collections.shuffle(range);
+
+      // Select three random pokemon and add them to random points in the array
+      for (int j = 0; j < Math.ceil(allPokes.size() / 2); j++) {
+        int rX = rand.nextInt(2) ;
+        int rY = rand.nextInt(5);
+
+        field[rX][rY].setContainedPokemon(allPokes.get(j));
+        println(allPokes.get(j));
+      }
+      println("Step 2");
+      // Refresh the Pokeballs
+      renderPokeSlots();
+
+      // Wait for the user to play for a bit
+      //try {
+      //  Thread.sleep((long) (1000 * Math.ceil(allPokes.size() / 2)));
+      //} 
+      //catch (InterruptedException e) {
+      //  print("lmao rip this");
+      //}
+
+      println("Step 3");
+      // Remove all the Pokemon from the array
+      for (int y = 0; y < 2; y++) {
+        for (int x = 0; x < 5; x++) {
+          PokeSlot temp = field[y][x];
+          if (temp.containsPokemon()) {
+            println("true");
+            temp.removeContainedPokemon();
+          }
+        }
+      }
+    }
+  }
+
+
+
+  // Renders the 
+  // The key handling procedure for this IMode
+  public void onActionPerformed(GUIEvent e) {
+    for (ActionButton b : fieldButtons) {
+      if (b.equals(e.getSource())) {
+        b.performAction();
+        renderPokeSlots();
+        break;
+      }
+    }
+  }
+
+  // See @link IMode#initAcitonListeners()
+  public void initActionListeners() {
+    for (ActionButton b : fieldButtons) {
+      controller.add(b.getButton());
+    }
+  }
+
+  public void clearGUI() {
+  }
+
+
+  // Initializes the buttons for the field and help button
+  void initGameGUI(ArrayList<ActionButton> fieldButtons) {
+    // clear the previous GUI
+    //currMode.clearGUI();
+
+    // set the look and feel
+    setLookAndFeel(color(255, 255, 255, 0));
+
+    // initialize the Buttons
+    int buttonOffset = 137 / 2;
+    for (int y = 0; y < 2; y++) {
+      for (int x = 0; x < 5; x++) {
+        PVector buttonLoc = slotLocations.get(new PVector(x, y));
+        PVector size = pokeball.getSize();
+        IFButton b = new IFButton(x + " " + y, (int) buttonLoc.x - buttonOffset, (int) buttonLoc.y - buttonOffset);
+        b.setSize((int) size.x, (int) size.y);
+        b.addActionListener(this);
+
+        ActionButton ab = new ActionButton(b, new PVector(y, x));
+        fieldButtons.add(ab);
+      }
+    }
+  }
+}
